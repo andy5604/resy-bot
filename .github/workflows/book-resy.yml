@@ -27,12 +27,23 @@ jobs:
           pip install poetry
           poetry install
       
-      - name: Create credentials file
+      - name: Get fresh auth token and create credentials
         run: |
+          # Login to Resy to get a fresh token
+          RESPONSE=$(curl -s -X POST 'https://api.resy.com/3/auth/password' \
+            -H 'Authorization: ResyAPI api_key="${{ secrets.RESY_API_KEY }}"' \
+            -H 'Content-Type: application/x-www-form-urlencoded' \
+            -d 'email=${{ secrets.RESY_EMAIL }}&password=${{ secrets.RESY_PASSWORD }}')
+          
+          # Extract token from response
+          FRESH_TOKEN=$(echo $RESPONSE | python -c "import sys,json; print(json.load(sys.stdin)['token'])")
+          
+          echo "Got fresh token"
+          
           cat > credentials.json << EOF
           {
             "api_key": "${{ secrets.RESY_API_KEY }}",
-            "token": "${{ secrets.RESY_TOKEN }}",
+            "token": "$FRESH_TOKEN",
             "payment_method_id": ${{ secrets.RESY_PAYMENT_ID }},
             "email": "${{ secrets.RESY_EMAIL }}",
             "password": "${{ secrets.RESY_PASSWORD }}"
@@ -41,7 +52,6 @@ jobs:
       
       - name: Create reservation request
         run: |
-          # Calculate the date 21 days from now
           TARGET_DATE=$(date -d "+21 days" +%Y-%m-%d)
           cat > reservation_request.json << EOF
           {
