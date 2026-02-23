@@ -2,9 +2,12 @@ name: Book 4 Charles
 
 on:
   schedule:
-    # Runs at 8:59 AM EST (13:59 UTC) to be ready right at 9:00 AM
-    - cron: '59 13 * * *'
-  workflow_dispatch:  # Allows you to run it manually too
+    - cron: '35 13 * * *'
+    - cron: '40 13 * * *'
+    - cron: '45 13 * * *'
+    - cron: '50 13 * * *'
+    - cron: '55 13 * * *'
+  workflow_dispatch:
 
 jobs:
   book:
