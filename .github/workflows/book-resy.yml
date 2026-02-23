@@ -1,0 +1,62 @@
+name: Book 4 Charles
+
+on:
+  schedule:
+    # Runs at 8:59 AM EST (13:59 UTC) to be ready right at 9:00 AM
+    - cron: '59 13 * * *'
+  workflow_dispatch:  # Allows you to run it manually too
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install
+      
+      - name: Create credentials file
+        run: |
+          cat > credentials.json << EOF
+          {
+            "api_key": "${{ secrets.RESY_API_KEY }}",
+            "token": "${{ secrets.RESY_TOKEN }}",
+            "payment_method_id": ${{ secrets.RESY_PAYMENT_ID }},
+            "email": "${{ secrets.RESY_EMAIL }}",
+            "password": "${{ secrets.RESY_PASSWORD }}"
+          }
+          EOF
+      
+      - name: Create reservation request
+        run: |
+          # Calculate the date 21 days from now
+          TARGET_DATE=$(date -d "+21 days" +%Y-%m-%d)
+          cat > reservation_request.json << EOF
+          {
+            "reservation_request": {
+              "party_size": 2,
+              "venue_id": 834,
+              "window_hours": 3,
+              "prefer_early": false,
+              "ideal_date": "$TARGET_DATE",
+              "ideal_hour": 19,
+              "ideal_minute": 0
+            },
+            "expected_drop_hour": "9",
+            "expected_drop_minute": "0"
+          }
+          EOF
+          echo "Targeting date: $TARGET_DATE"
+      
+      - name: Run Resy Bot
+        run: |
+          poetry run python main.py credentials.json reservation_request.json
